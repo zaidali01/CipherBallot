@@ -87,10 +87,9 @@ export default function CandidateCard({ candidate, onVote, hasVoted, disabled })
           {/* Action Button */}
           <button
             onClick={() => onVote(candidate)}
-            disabled={hasVoted || disabled}
             className="w-full btn-protocol-primary py-3 text-xs"
           >
-            {hasVoted ? 'Ballot Cast' : 'See Profile'}
+            See Profile
           </button>
         </div>
       </div>
@@ -134,10 +133,9 @@ export default function CandidateCard({ candidate, onVote, hasVoted, disabled })
       {/* Action Button */}
       <button
         onClick={() => onVote(candidate)}
-        disabled={hasVoted || disabled}
         className="w-full btn-protocol-secondary py-3 text-xs"
       >
-        {hasVoted ? 'Ballot Cast' : 'See Profile'}
+        See Profile
       </button>
     </div>
   );

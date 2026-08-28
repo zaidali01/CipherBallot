@@ -24,6 +24,8 @@ export default function VoteModal({
   error,
   onConfirm,
   onClose,
+  votingDisabled,
+  votingDisabledMessage,
 }) {
   /* ─── Lock body scroll when modal is open ─── */
   useEffect(() => {
@@ -53,17 +55,19 @@ export default function VoteModal({
       />
 
       {/* ─── Modal Card ─── */}
-      <div className="relative bg-white border-2 border-terminal-black w-full max-w-lg animate-slide-up">
+      <div className="relative bg-white border-2 border-terminal-black w-full max-w-lg animate-slide-up max-h-[90vh] overflow-y-auto">
         {/* ─── Header Bar ─── */}
-        <div className="bg-terminal-black text-white px-6 py-3 flex items-center justify-between">
+        <div className="bg-terminal-black text-white px-6 py-3 flex items-center justify-between sticky top-0 z-10">
           <span className="font-mono text-xs uppercase tracking-protocol">
-            Ballot Confirmation
+            {votingDisabled ? 'Candidate Profile' : 'Ballot Confirmation'}
           </span>
-          <svg className="w-4 h-4 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-              d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"
-            />
-          </svg>
+          <button onClick={onClose} className="hover:text-red-400 transition-colors">
+            <svg className="w-4 h-4 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
         </div>
 
         {/* ─── Body ─── */}
@@ -110,24 +114,40 @@ export default function VoteModal({
 
           <div className="protocol-divider" />
 
-          {/* Warning */}
+          {/* Warning or Disabled Message */}
           {!txStatus && (
-            <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200">
-              <svg className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-                  d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
-                />
-              </svg>
-              <div>
-                <p className="text-xs font-semibold text-amber-800 uppercase tracking-wide">
-                  Immutable Action
-                </p>
-                <p className="text-xs text-amber-700 mt-1 leading-relaxed">
-                  This ballot will be permanently recorded on the blockchain. 
-                  This action cannot be undone or modified once confirmed.
-                </p>
+            votingDisabled ? (
+              <div className="flex items-start gap-3 p-4 bg-gray-50 border border-gray-200">
+                <svg className="w-5 h-5 text-terminal-grey flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                </svg>
+                <div>
+                  <p className="text-xs font-semibold text-terminal-black uppercase tracking-wide">
+                    Voting Unavailable
+                  </p>
+                  <p className="text-xs text-terminal-grey mt-1 leading-relaxed">
+                    {votingDisabledMessage}
+                  </p>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200">
+                <svg className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                    d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
+                  />
+                </svg>
+                <div>
+                  <p className="text-xs font-semibold text-amber-800 uppercase tracking-wide">
+                    Immutable Action
+                  </p>
+                  <p className="text-xs text-amber-700 mt-1 leading-relaxed">
+                    This ballot will be permanently recorded on the blockchain. 
+                    This action cannot be undone or modified once confirmed.
+                  </p>
+                </div>
+              </div>
+            )
           )}
 
           {/* Transaction Status */}
@@ -184,22 +204,24 @@ export default function VoteModal({
         <div className="px-6 pb-6 flex flex-col sm:flex-row gap-3">
           {!txStatus && (
             <>
-              <button
-                onClick={onConfirm}
-                className="btn-protocol-primary flex-1"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"
-                  />
-                </svg>
-                Confirm Ballot
-              </button>
+              {!votingDisabled && (
+                <button
+                  onClick={onConfirm}
+                  className="btn-protocol-primary flex-1"
+                >
+                  <svg className="w-4 h-4 mr-2 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                      d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"
+                    />
+                  </svg>
+                  Confirm Ballot
+                </button>
+              )}
               <button
                 onClick={onClose}
-                className="btn-protocol-secondary flex-1"
+                className={votingDisabled ? "btn-protocol-primary w-full" : "btn-protocol-secondary flex-1"}
               >
-                Cancel
+                {votingDisabled ? "Close Profile" : "Cancel"}
               </button>
             </>
           )}
@@ -223,12 +245,14 @@ export default function VoteModal({
         </div>
 
         {/* ─── Bottom Disclaimer ─── */}
-        <div className="px-6 pb-4">
-          <p className="text-[10px] text-terminal-grey leading-relaxed uppercase">
-            By confirming, you acknowledge that all actions are immutable and 
-            recorded on the quantum-ledger. Unauthorized attempts will be logged.
-          </p>
-        </div>
+        {!votingDisabled && !txStatus && (
+          <div className="px-6 pb-4">
+            <p className="text-[10px] text-terminal-grey leading-relaxed uppercase">
+              By confirming, you acknowledge that all actions are immutable and 
+              recorded on the quantum-ledger. Unauthorized attempts will be logged.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

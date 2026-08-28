@@ -452,6 +452,13 @@ export default function VoterDashboard() {
         error={error}
         onConfirm={handleConfirmVote}
         onClose={handleCloseModal}
+        votingDisabled={hasVoted || electionPhase !== 'Active' || !isWhitelisted}
+        votingDisabledMessage={
+          hasVoted ? 'You have already cast your ballot in this election.'
+          : electionPhase !== 'Active' ? 'Voting is currently closed.'
+          : !isWhitelisted ? 'Your wallet is not whitelisted to vote.'
+          : ''
+        }
       />
     </div>
   );
