@@ -58,8 +58,6 @@ const studentSchema = new mongoose.Schema(
   }
 );
 
-// Indexes for fast lookups
-studentSchema.index({ walletAddress: 1 });
-studentSchema.index({ email: 1 });
+// Indexes for fast lookups (already handled by unique: true on the fields)
 
 module.exports = mongoose.model('Student', studentSchema);
