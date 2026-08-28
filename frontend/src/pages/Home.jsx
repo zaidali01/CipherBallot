@@ -1,21 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ethers } from 'ethers';
-import api, { login } from '../utils/api';
 import useMetaMask from '../hooks/useMetaMask';
 
 /*
  * Home.jsx — Landing / Login Page
  * Design: Institutional auth terminal matching the "SYSTEM.AUTH_V4.2.0" inspiration.
- *
- * Features:
- *   - Centered auth card with "CIPHERBALLOT" serif heading
- *   - "DIGITAL SIGNATURE AUTHENTICATION" button → MetaMask connection
- *   - Numbered protocol instructions
- *   - "ACCESS VIA PHYSICAL CREDENTIAL" secondary button (SSO placeholder)
- *   - NODE_STATUS floating indicator
- *   - Immutability disclaimer
- *   - Status footer bar
  */
 
 export default function Home() {
@@ -29,7 +18,7 @@ export default function Home() {
     connectWallet,
   } = useMetaMask();
 
-  // Redirect to dashboard with a short delay to display the success state
+  // Redirect to dashboard immediately upon wallet connection
   useEffect(() => {
     if (isConnected && account) {
       const timer = setTimeout(() => {
@@ -38,72 +27,6 @@ export default function Home() {
       return () => clearTimeout(timer);
     }
   }, [isConnected, account, navigate]);
-
-
-  const [ssoMode, setSsoMode] = useState(false);
-  const [ssoEmail, setSsoEmail] = useState('');
-  const [ssoPassword, setSsoPassword] = useState('');
-  const [ssoError, setSsoError] = useState(null);
-  const [backendUser, setBackendUser] = useState(null);
-  const [isLinking, setIsLinking] = useState(false);
-
-  /* ─── Handle MetaMask connection and redirect ─── */
-  const handleDigitalAuth = async () => {
-    if (!backendUser) {
-      setSsoError("Please authenticate via Institutional Email first.");
-      setSsoMode(true);
-      return;
-    }
-    await connectWallet();
-  };
-
-  /* ─── Handle Wallet Linking once connected ─── */
-  useEffect(() => {
-    const linkWallet = async () => {
-      if (isConnected && account && backendUser && !backendUser.isWalletLinked && !isLinking) {
-        setIsLinking(true);
-        try {
-          // Ask user to sign a message to prove ownership
-          const provider = new ethers.BrowserProvider(window.ethereum);
-          const signer = await provider.getSigner();
-          const message = `CipherBallot: I verify ownership of this wallet for voting purposes.\nTimestamp: ${Date.now()}`;
-          const signature = await signer.signMessage(message);
-
-          // Send to backend to link
-          await api.post('/auth/link-wallet', {
-            walletAddress: account,
-            signature,
-            message
-          });
-
-          // Redirect to dashboard
-          setTimeout(() => navigate('/dashboard'), 1000);
-        } catch (err) {
-          console.error("Wallet linking failed", err);
-          setSsoError("Failed to verify wallet ownership. Please try again.");
-          setIsLinking(false);
-        }
-      } else if (isConnected && account && backendUser?.isWalletLinked) {
-        // Already linked, just redirect
-        setTimeout(() => navigate('/dashboard'), 800);
-      }
-    };
-
-    linkWallet();
-  }, [isConnected, account, backendUser, isLinking, navigate]);
-
-  /* ─── SSO Login handler (Mock) ─── */
-  const handleSSOLogin = async (e) => {
-    e.preventDefault();
-    setSsoError(null);
-    try {
-      const response = await login(ssoEmail, ssoPassword);
-      setBackendUser(response.student);
-      setSsoMode(false); // Switch back to wallet connection view
-    } catch (err) {
-      setSsoError(err.response?.data?.error || 'Authentication failed');
-    }
-  };
 
   return (
     <div className="relative min-h-screen bg-terminal-light flex flex-col">
@@ -190,24 +113,6 @@ export default function Home() {
                     <p className="font-mono text-xs text-green-600 mt-0.5">
                       {account.slice(0, 10)}...{account.slice(-8)}
                     </p>
-                    {isLinking && <p className="text-xs text-status-active mt-1">Verifying ownership signature...</p>}
-                  </div>
-                </div>
-              )}
-              
-              {/* ─── Logged In State (Backend) ─── */}
-              {backendUser && !isConnected && (
-                <div className="flex items-center gap-3 p-4 bg-blue-50 border border-blue-200 animate-slide-up">
-                  <svg className="w-5 h-5 text-protocol-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                  <div>
-                    <p className="text-xs font-semibold text-protocol-blue uppercase tracking-wide">
-                      Identity Verified
-                    </p>
-                    <p className="font-mono text-xs text-blue-700 mt-0.5">
-                      {backendUser.email}
-                    </p>
                   </div>
                 </div>
               )}
@@ -222,111 +127,53 @@ export default function Home() {
                 </div>
               )}
 
-              {/* ─── SSO Form (Toggle) ─── */}
-              {ssoMode ? (
-                <form onSubmit={handleSSOLogin} className="space-y-4 animate-fade-in">
-                  <div>
-                    <label className="protocol-label mb-1.5 block">Institutional Email</label>
-                    <input
-                      type="email"
-                      value={ssoEmail}
-                      onChange={(e) => setSsoEmail(e.target.value)}
-                      placeholder="student@university.edu"
-                      className="w-full px-4 py-3 border border-terminal-black/20 font-mono text-sm focus:outline-none focus:border-terminal-black transition-colors"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="protocol-label mb-1.5 block">Credential</label>
-                    <input
-                      type="password"
-                      value={ssoPassword}
-                      onChange={(e) => setSsoPassword(e.target.value)}
-                      placeholder="••••••••"
-                      className="w-full px-4 py-3 border border-terminal-black/20 font-mono text-sm focus:outline-none focus:border-terminal-black transition-colors"
-                      required
-                    />
-                  </div>
-                  {ssoError && (
-                    <p className="text-xs text-status-halted">{ssoError}</p>
-                  )}
-                  <button type="submit" className="btn-protocol-primary w-full">
-                    Authenticate
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { setSsoMode(false); setSsoError(null); }}
-                    className="text-xs text-terminal-grey hover:text-terminal-black transition-colors w-full text-center uppercase tracking-protocol"
-                  >
-                    ← Back to Digital Signature
-                  </button>
-                </form>
-              ) : (
-                <>
-                  {/* ─── Digital Signature Auth Button ─── */}
-                  {!isConnected && (
-                    <button
-                      onClick={handleDigitalAuth}
-                      disabled={isConnecting}
-                      className="btn-protocol-primary w-full py-5 text-base relative"
-                    >
-                      {isConnecting ? (
-                        <>
-                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                          Connecting...
-                        </>
-                      ) : (
-                        <>
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                              d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"
-                            />
-                          </svg>
-                          Digital Signature Authentication
-                        </>
-                      )}
-                    </button>
-                  )}
-
-                  {/* ─── Protocol Instructions ─── */}
-                  <div className="border border-terminal-black/10 p-5">
-                    <p className="text-xs font-bold uppercase tracking-protocol text-terminal-black mb-4">
-                      Protocol Instructions
-                    </p>
-                    <div className="space-y-3">
-                      {[
-                        'Authenticate Institutional Identity',
-                        'Sign Governance Handshake',
-                        'Access Secure Voting Terminal',
-                      ].map((step, i) => (
-                        <div key={i} className="flex items-start gap-3">
-                          <span className="text-sm font-bold text-terminal-black min-w-[28px]">
-                            {String(i + 1).padStart(2, '0')}.
-                          </span>
-                          <span className="text-xs uppercase tracking-wide text-terminal-grey">
-                            {step}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* ─── SSO / Physical Credential Button ─── */}
-                  {!backendUser && (
-                    <button
-                      onClick={() => setSsoMode(true)}
-                      className="btn-protocol-secondary w-full"
-                    >
+              {/* ─── Digital Signature Auth Button ─── */}
+              {!isConnected && (
+                <button
+                  onClick={connectWallet}
+                  disabled={isConnecting}
+                  className="btn-protocol-primary w-full py-5 text-base relative"
+                >
+                  {isConnecting ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      Connecting...
+                    </>
+                  ) : (
+                    <>
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-                          d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5zm6-10.125a1.875 1.875 0 11-3.75 0 1.875 1.875 0 013.75 0zm1.294 6.336a6.721 6.721 0 01-3.17.789 6.721 6.721 0 01-3.168-.789 3.376 3.376 0 016.338 0z"
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                          d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"
                         />
                       </svg>
-                      Access Via Physical Credential
-                    </button>
+                      Digital Signature Authentication
+                    </>
                   )}
-                </>
+                </button>
               )}
+
+              {/* ─── Protocol Instructions ─── */}
+              <div className="border border-terminal-black/10 p-5">
+                <p className="text-xs font-bold uppercase tracking-protocol text-terminal-black mb-4">
+                  Protocol Instructions
+                </p>
+                <div className="space-y-3">
+                  {[
+                    'Connect Digital Wallet',
+                    'Verify Identity Node',
+                    'Access Secure Voting Terminal',
+                  ].map((step, i) => (
+                    <div key={i} className="flex items-start gap-3">
+                      <span className="text-sm font-bold text-terminal-black min-w-[28px]">
+                        {String(i + 1).padStart(2, '0')}.
+                      </span>
+                      <span className="text-xs uppercase tracking-wide text-terminal-grey">
+                        {step}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
 
               {/* ─── Disclaimer ─── */}
               <div className="protocol-divider" />
@@ -337,7 +184,7 @@ export default function Home() {
               </p>
 
               {/* ─── MetaMask Not Installed Warning ─── */}
-              {!isMetaMaskInstalled && !ssoMode && (
+              {!isMetaMaskInstalled && (
                 <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200">
                   <svg className="w-4 h-4 text-amber-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3.75m9.303 3.376c-.866 1.5.217 3.374 1.948 3.374H4.075c1.73 0 2.813-1.874 1.948-3.374L10.05 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
