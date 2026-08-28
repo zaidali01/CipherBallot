@@ -29,8 +29,11 @@ export default function CandidateCard({ candidate, onVote, hasVoted, disabled })
     /* ─── 1. Featured Incumbent Card Layout ─── */
     return (
       <div className="protocol-card bg-white p-6 grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-in md:col-span-2">
-        {/* Left: Greyscale Portrait */}
-        <div className="h-64 md:h-full relative overflow-hidden border border-terminal-black">
+        {/* Left: Greyscale Portrait (Clickable) */}
+        <div 
+          className="h-64 md:h-full relative overflow-hidden border border-terminal-black cursor-pointer hover:opacity-90 transition-opacity"
+          onClick={() => onVote(candidate)}
+        >
           {candidate.portraitUrl ? (
             <img
               src={candidate.portraitUrl}
@@ -43,7 +46,10 @@ export default function CandidateCard({ candidate, onVote, hasVoted, disabled })
 
         {/* Right: Details & Metadata */}
         <div className="md:col-span-2 flex flex-col justify-between space-y-4">
-          <div className="relative">
+          <div 
+            className="relative cursor-pointer hover:bg-gray-50 transition-colors -mx-2 px-2 py-1 rounded"
+            onClick={() => onVote(candidate)}
+          >
             {/* Green Selection Checkmark Badge */}
             <div className="absolute top-0 right-0">
               <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-green-50 text-status-active border border-status-active/30">
@@ -64,7 +70,10 @@ export default function CandidateCard({ candidate, onVote, hasVoted, disabled })
             </p>
           </div>
 
-          <div>
+          <div 
+            className="cursor-pointer hover:bg-gray-50 transition-colors -mx-2 px-2 py-1 rounded"
+            onClick={() => onVote(candidate)}
+          >
             <p className="protocol-label text-[9px] mb-1">Manifesto Snippet</p>
             <p className="text-xs text-terminal-grey italic leading-relaxed">
               {candidate.manifesto || '"Our future depends on the resilience of our decentralized energy grid."'}
@@ -99,8 +108,11 @@ export default function CandidateCard({ candidate, onVote, hasVoted, disabled })
   /* ─── 2. Challenger Card Layout ─── */
   return (
     <div className="protocol-card bg-white p-5 flex flex-col justify-between gap-5 animate-fade-in">
-      {/* Top: Greyscale Portrait */}
-      <div className="h-48 relative overflow-hidden border border-terminal-black">
+      {/* Top: Greyscale Portrait (Clickable) */}
+      <div 
+        className="h-48 relative overflow-hidden border border-terminal-black cursor-pointer hover:opacity-90 transition-opacity"
+        onClick={() => onVote(candidate)}
+      >
         {candidate.portraitUrl ? (
           <img
             src={candidate.portraitUrl}
@@ -111,8 +123,11 @@ export default function CandidateCard({ candidate, onVote, hasVoted, disabled })
         ) : portraitFallback}
       </div>
 
-      {/* Details */}
-      <div className="flex flex-col gap-3">
+      {/* Details (Clickable) */}
+      <div 
+        className="flex flex-col gap-3 cursor-pointer hover:bg-gray-50 transition-colors -mx-2 px-2 py-1 rounded"
+        onClick={() => onVote(candidate)}
+      >
         <div>
           <p className="text-[9px] font-bold text-terminal-grey uppercase tracking-protocol">
             {candidate.role || 'Challenger / District 04'}
